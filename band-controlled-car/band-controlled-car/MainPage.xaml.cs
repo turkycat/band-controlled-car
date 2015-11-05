@@ -1,4 +1,6 @@
 ﻿using Microsoft.Band;
+using Microsoft.Maker.RemoteWiring;
+using Microsoft.Maker.Serial;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,6 +28,10 @@ namespace band_controlled_car
     {
         IBandClient bandClient;
 
+        volatile bool arduinoConnected = false;
+        IStream arduinoConnection;
+        RemoteDevice arduino;
+
         public MainPage()
         {
             this.InitializeComponent();
@@ -47,8 +53,10 @@ namespace band_controlled_car
 
                 // Connect to Microsoft Band.
                 bandClient = await BandClientManager.Instance.ConnectAsync( pairedBands[0] );
-                
-                    // Subscribe to Accelerometer data.
+
+                BandConnectionStatusText.Text = "Connected.";
+
+                // Subscribe to Accelerometer data.
                 bandClient.SensorManager.Accelerometer.ReadingChanged += Accelerometer_ReadingChanged;
                 await bandClient.SensorManager.Accelerometer.StartReadingsAsync();
             }
@@ -60,13 +68,40 @@ namespace band_controlled_car
 
         private void Accelerometer_ReadingChanged( object sender, Microsoft.Band.Sensors.BandSensorReadingEventArgs<Microsoft.Band.Sensors.IBandAccelerometerReading> e )
         {
-            BandConnectionStatusText.Text = String.Format( "{0}", e.SensorReading.AccelerationX );
+            if( arduinoConnected )
+            {
+                //TODO
+            }
         }
 
         private async void Arduino_Connect( object sender, RoutedEventArgs e )
         {
-        }
+            arduinoConnected = false;
+            ArduinoConnectionStatusText.Text = "Connecting...";
+            arduinoConnection = new BluetoothSerial( "" );      //TODO
+            arduino = new RemoteDevice( arduinoConnection );
+            arduino.DeviceReady += Arduino_DeviceReady;
+            arduino.DeviceConnectionFailed += Arduino_DeviceConnectionFailed;
+            arduino.DeviceConnectionLost += Arduino_DeviceConnectionLost;
+            arduinoConnection.begin( 115200, SerialConfig.SERIAL_8N1 );
         }
 
-    
+        private void Arduino_DeviceReady()
+        {
+            arduinoConnected = true;
+            ArduinoConnectionStatusText.Text = "Connected.";
+        }
+
+        private void Arduino_DeviceConnectionFailed( string message )
+        {
+            arduinoConnected = false;
+            ArduinoConnectionStatusText.Text = "Connection Failed.";
+        }
+
+        private void Arduino_DeviceConnectionLost( string message )
+        {
+            arduinoConnected = false;
+            ArduinoConnectionStatusText.Text = "Connection Lost.";
+        }
+    }
 }
