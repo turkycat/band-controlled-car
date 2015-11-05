@@ -92,6 +92,8 @@ namespace band_controlled_car
                 BandConnectionStatusText.Text = "Connected.";
 
                 // Subscribe to Accelerometer data.
+                //var intervals = bandClient.SensorManager.Accelerometer.SupportedReportingIntervals;
+                bandClient.SensorManager.Accelerometer.ReportingInterval = bandClient.SensorManager.Accelerometer.SupportedReportingIntervals.Last();
                 bandClient.SensorManager.Accelerometer.ReadingChanged += Accelerometer_ReadingChanged;
                 await bandClient.SensorManager.Accelerometer.StartReadingsAsync();
             }
@@ -103,30 +105,50 @@ namespace band_controlled_car
 
         private void Accelerometer_ReadingChanged( object sender, Microsoft.Band.Sensors.BandSensorReadingEventArgs<Microsoft.Band.Sensors.IBandAccelerometerReading> e )
         {
-            if( arduinoConnected )
+            var action = Dispatcher.RunAsync( Windows.UI.Core.CoreDispatcherPriority.Normal, new Windows.UI.Core.DispatchedHandler( () =>
             {
-                var action = Dispatcher.RunAsync( Windows.UI.Core.CoreDispatcherPriority.Normal, new Windows.UI.Core.DispatchedHandler( () =>
+                if( arduinoConnected )
                 {
                     //Y is the left/right tilt, while X is the fwd/rev tilt
-                    double lr = -e.SensorReading.AccelerationY;
+                    double lr = e.SensorReading.AccelerationY;
                     double fb = e.SensorReading.AccelerationX;
 
                     handleTurn( lr );
                     handleDirection( fb );
+                }
+
+                XYZText.Text = String.Format( "x: {0}\ny: {1}\nz: {2}", e.SensorReading.AccelerationX, e.SensorReading.AccelerationY, e.SensorReading.AccelerationZ );
             } ) );
-        }
+
         }
 
         private async void Arduino_Connect( object sender, RoutedEventArgs e )
         {
+            if( arduinoConnected )
+            {
+                //disconnect
+                Arduino_Disconnect();
+                ArduinoConnectionStatusText.Text = "Disconnected.";
+            }
+            else
+            {
+                arduinoConnected = false;
+                ArduinoConnectionStatusText.Text = "Connecting...";
+                arduinoConnection = new BluetoothSerial( "RNBT-773E" );
+                arduino = new RemoteDevice( arduinoConnection );
+                arduino.DeviceReady += Arduino_DeviceReady;
+                arduino.DeviceConnectionFailed += Arduino_DeviceConnectionFailed;
+                arduino.DeviceConnectionLost += Arduino_DeviceConnectionLost;
+                arduinoConnection.begin( 115200, SerialConfig.SERIAL_8N1 );
+            }
+        }
+
+        private void Arduino_Disconnect()
+        {
             arduinoConnected = false;
-            ArduinoConnectionStatusText.Text = "Connecting...";
-            arduinoConnection = new BluetoothSerial( "RNBT-773E" );
-            arduino = new RemoteDevice( arduinoConnection );
-            arduino.DeviceReady += Arduino_DeviceReady;
-            arduino.DeviceConnectionFailed += Arduino_DeviceConnectionFailed;
-            arduino.DeviceConnectionLost += Arduino_DeviceConnectionLost;
-            arduinoConnection.begin( 115200, SerialConfig.SERIAL_8N1 );
+            arduinoConnection.end();
+            arduinoConnection = null;
+            arduino = null;
         }
 
         private void Arduino_DeviceReady()
@@ -146,14 +168,9 @@ namespace band_controlled_car
 
         private void Arduino_DeviceConnectionFailed( string message )
         {
-            arduinoConnected = false;
-            arduinoConnection.end();
-            arduinoConnection = null;
-            arduino = null;
-
-
             var action = Dispatcher.RunAsync( Windows.UI.Core.CoreDispatcherPriority.Normal, new Windows.UI.Core.DispatchedHandler( () =>
             {
+                Arduino_Disconnect();
                 ArduinoConnectionStatusText.Text = "Connection Failed.";
             } ) );
         }
