@@ -8,6 +8,9 @@
     mc:Ignorable="d">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-
+        <Button Content="Connect to Band" HorizontalAlignment="Left" Margin="107,107,0,0" VerticalAlignment="Top" Click="Band_Connect" FontSize="20"/>
+        <TextBlock Name="BandConnectionStatusText" Margin="107,150,0,0" Text="Not Connected."/>
+        <Button Content="Connect to Arduino" HorizontalAlignment="Left" Margin="107,214,0,0" VerticalAlignment="Top" Click="Arduino_Connect" FontSize="20"/>
+        <TextBlock Name="ArduinoConnectionStatusText" Margin="107,270,0,0" Text="Not Connected."/>
     </Grid>
 </Page>
