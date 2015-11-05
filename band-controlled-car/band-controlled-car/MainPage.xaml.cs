@@ -121,7 +121,7 @@ namespace band_controlled_car
         {
             arduinoConnected = false;
             ArduinoConnectionStatusText.Text = "Connecting...";
-            arduinoConnection = new BluetoothSerial( "" );      //TODO
+            arduinoConnection = new BluetoothSerial( "RNBT-773E" );
             arduino = new RemoteDevice( arduinoConnection );
             arduino.DeviceReady += Arduino_DeviceReady;
             arduino.DeviceConnectionFailed += Arduino_DeviceConnectionFailed;
