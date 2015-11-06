@@ -9,9 +9,9 @@
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <StackPanel>
-            <Button Content="Connect to Band" Margin="25" HorizontalAlignment="Left" VerticalAlignment="Top" Click="Band_Connect" FontSize="20"/>
+            <Button Content="Connect to Band" Margin="25" HorizontalAlignment="Left" VerticalAlignment="Top" Click="Band_Connect_Button" FontSize="20"/>
             <TextBlock Name="BandConnectionStatusText" Margin="25" Text="Not Connected."/>
-            <Button Content="Connect to Arduino" Margin="25" HorizontalAlignment="Left" VerticalAlignment="Top" Click="Arduino_Connect" FontSize="20"/>
+            <Button Content="Connect to Arduino" Margin="25" HorizontalAlignment="Left" VerticalAlignment="Top" Click="Arduino_Connect_Button" FontSize="20"/>
             <TextBlock Name="ArduinoConnectionStatusText" Margin="25" Text="Not Connected."/>
             <TextBlock Name="XYZText" Margin="25"  Text="Test"/>
         </StackPanel>

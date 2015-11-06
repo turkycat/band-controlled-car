@@ -3,6 +3,7 @@ using Microsoft.Maker.RemoteWiring;
 using Microsoft.Maker.Serial;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -27,8 +28,8 @@ namespace band_controlled_car
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        private const double LR_MAG = 0.4;
-        private const double FB_MAG = 0.4;
+        private const double LR_MAG = 0.3;
+        private const double FB_MAG = 0.5;
         private const double MAX_ANALOG_VALUE = 255.0;
         private const byte FB_DIRECTION_CONTROL_PIN = 8;
         private const byte FB_MOTOR_CONTROL_PIN = 9;
@@ -68,11 +69,33 @@ namespace band_controlled_car
         public MainPage()
         {
             this.InitializeComponent();
+
+            keepScreenOnRequest = new DisplayRequest();
+            keepScreenOnRequest.RequestActive();
+
             turn = Turn.none;
             direction = Direction.none;
+
+            initialize();
         }
 
-        private async void Band_Connect( object sender, RoutedEventArgs e )
+        private async void initialize()
+        {
+            while( !await Band_Connect() );
+
+            while( !arduinoConnected )
+            {
+                Arduino_Connect();
+                await Task.Delay( 10000 );
+            }
+        }
+
+        private async void Band_Connect_Button( object sender, RoutedEventArgs e )
+        {
+            Band_Connect();
+        }
+
+        private async Task<bool> Band_Connect()
         {
             BandConnectionStatusText.Text = "Connecting ...";
 
@@ -83,7 +106,7 @@ namespace band_controlled_car
                 if( pairedBands.Length < 1 )
                 {
                     BandConnectionStatusText.Text = "This sample app requires a Microsoft Band paired to your device. Also make sure that you have the latest firmware installed on your Band, as provided by the latest Microsoft Health app.";
-                    return;
+                    return false;
                 }
 
                 // Connect to Microsoft Band.
@@ -96,11 +119,14 @@ namespace band_controlled_car
                 bandClient.SensorManager.Accelerometer.ReportingInterval = bandClient.SensorManager.Accelerometer.SupportedReportingIntervals.Last();
                 bandClient.SensorManager.Accelerometer.ReadingChanged += Accelerometer_ReadingChanged;
                 await bandClient.SensorManager.Accelerometer.StartReadingsAsync();
+                Debug.WriteLine( "Band Connected." );
             }
             catch( Exception ex )
             {
                 BandConnectionStatusText.Text = ex.ToString();
+                return false;
             }
+            return true;
         }
 
         private void Accelerometer_ReadingChanged( object sender, Microsoft.Band.Sensors.BandSensorReadingEventArgs<Microsoft.Band.Sensors.IBandAccelerometerReading> e )
@@ -110,7 +136,7 @@ namespace band_controlled_car
                 if( arduinoConnected )
                 {
                     //Y is the left/right tilt, while X is the fwd/rev tilt
-                    double lr = e.SensorReading.AccelerationY;
+                    double lr = -e.SensorReading.AccelerationZ;
                     double fb = e.SensorReading.AccelerationX;
 
                     handleTurn( lr );
@@ -122,25 +148,21 @@ namespace band_controlled_car
 
         }
 
-        private async void Arduino_Connect( object sender, RoutedEventArgs e )
+        private async void Arduino_Connect_Button( object sender, RoutedEventArgs e )
         {
-            if( arduinoConnected )
-            {
-                //disconnect
-                Arduino_Disconnect();
-                ArduinoConnectionStatusText.Text = "Disconnected.";
-            }
-            else
-            {
-                arduinoConnected = false;
-                ArduinoConnectionStatusText.Text = "Connecting...";
-                arduinoConnection = new BluetoothSerial( "RNBT-773E" );
-                arduino = new RemoteDevice( arduinoConnection );
-                arduino.DeviceReady += Arduino_DeviceReady;
-                arduino.DeviceConnectionFailed += Arduino_DeviceConnectionFailed;
-                arduino.DeviceConnectionLost += Arduino_DeviceConnectionLost;
-                arduinoConnection.begin( 115200, SerialConfig.SERIAL_8N1 );
-            }
+            Arduino_Connect();
+        }
+
+        private async void Arduino_Connect()
+        {
+            arduinoConnected = false;
+            ArduinoConnectionStatusText.Text = "Connecting...";
+            arduinoConnection = new BluetoothSerial( "RNBT-773E" );
+            arduino = new RemoteDevice( arduinoConnection );
+            arduino.DeviceReady += Arduino_DeviceReady;
+            arduino.DeviceConnectionFailed += Arduino_DeviceConnectionFailed;
+            arduino.DeviceConnectionLost += Arduino_DeviceConnectionLost;
+            arduinoConnection.begin( 115200, SerialConfig.SERIAL_8N1 );
         }
 
         private void Arduino_Disconnect()
@@ -158,6 +180,7 @@ namespace band_controlled_car
             var action = Dispatcher.RunAsync( Windows.UI.Core.CoreDispatcherPriority.Normal, new Windows.UI.Core.DispatchedHandler( () =>
             {
                 ArduinoConnectionStatusText.Text = "Connected.";
+                Debug.WriteLine( "Arduino Connected." );
 
                 arduino.pinMode( LR_DIRECTION_CONTROL_PIN, PinMode.OUTPUT );
                 arduino.pinMode( FB_DIRECTION_CONTROL_PIN, PinMode.OUTPUT );
@@ -172,6 +195,7 @@ namespace band_controlled_car
             {
                 Arduino_Disconnect();
                 ArduinoConnectionStatusText.Text = "Connection Failed.";
+                Debug.WriteLine( "Arduino Connection Failed." );
             } ) );
         }
 
