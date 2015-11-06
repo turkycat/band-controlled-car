@@ -56,16 +56,6 @@ namespace band_controlled_car
             }
         }
 
-
-        private async void Band_Connect_Button( object sender, RoutedEventArgs e )
-        {
-        }
-
-        private async void Arduino_Connect_Button( object sender, RoutedEventArgs e )
-        {
-            Arduino_Connect();
-        }
-
         private async void Arduino_Connect()
         {
             arduinoConnected = false;
