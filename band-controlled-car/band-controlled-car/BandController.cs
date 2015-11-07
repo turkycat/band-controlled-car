@@ -26,7 +26,7 @@ namespace band_controlled_car
      *    </Capabilities>
      */
 
-    public class BandController : Controller
+    public class BandController : RemoteWiringController
     {
         //connection mechanisms
         private const int MAX_CONNECTION_ATTEMPTS = 5;
@@ -62,8 +62,8 @@ namespace band_controlled_car
             turn = Turn.none;
             direction = Direction.none;
 
-            Arduino.pinMode( LR_DIRECTION_CONTROL_PIN, PinMode.OUTPUT );
-            Arduino.pinMode( FB_DIRECTION_CONTROL_PIN, PinMode.OUTPUT );
+            Device.pinMode( LR_DIRECTION_CONTROL_PIN, PinMode.OUTPUT );
+            Device.pinMode( FB_DIRECTION_CONTROL_PIN, PinMode.OUTPUT );
             device.pinMode( LR_MOTOR_CONTROL_PIN, PinMode.PWM );
             device.pinMode( FB_MOTOR_CONTROL_PIN, PinMode.PWM );
         }
@@ -133,12 +133,12 @@ namespace band_controlled_car
                 if( turn != Turn.left )
                 {
                     //stop motor & set direction left
-                    Arduino.digitalWrite( LR_MOTOR_CONTROL_PIN, PinState.LOW );
-                    Arduino.digitalWrite( LR_DIRECTION_CONTROL_PIN, LEFT );
+                    Device.digitalWrite( LR_MOTOR_CONTROL_PIN, PinState.LOW );
+                    Device.digitalWrite( LR_DIRECTION_CONTROL_PIN, LEFT );
                 }
 
                 //start the motor by setting the pin high
-                Arduino.digitalWrite( LR_MOTOR_CONTROL_PIN, PinState.HIGH );
+                Device.digitalWrite( LR_MOTOR_CONTROL_PIN, PinState.HIGH );
                 turn = Turn.left;
             }
             else if( lr > LR_MAG )
@@ -146,18 +146,18 @@ namespace band_controlled_car
                 if( turn != Turn.right )
                 {
                     //stop motor & set direction right
-                    Arduino.digitalWrite( LR_MOTOR_CONTROL_PIN, PinState.LOW );
-                    Arduino.digitalWrite( LR_DIRECTION_CONTROL_PIN, RIGHT );
+                    Device.digitalWrite( LR_MOTOR_CONTROL_PIN, PinState.LOW );
+                    Device.digitalWrite( LR_DIRECTION_CONTROL_PIN, RIGHT );
                 }
 
                 //start the motor by setting the pin high
-                Arduino.digitalWrite( LR_MOTOR_CONTROL_PIN, PinState.HIGH );
+                Device.digitalWrite( LR_MOTOR_CONTROL_PIN, PinState.HIGH );
                 turn = Turn.right;
             }
             else
             {
                 //stop the motor
-                Arduino.digitalWrite( LR_MOTOR_CONTROL_PIN, PinState.LOW );
+                Device.digitalWrite( LR_MOTOR_CONTROL_PIN, PinState.LOW );
                 turn = Turn.none;
             }
         }
@@ -182,12 +182,12 @@ namespace band_controlled_car
                 if( direction != Direction.reverse )
                 {
                     //stop motor & set direction forward
-                    Arduino.analogWrite( FB_MOTOR_CONTROL_PIN, 0 );
-                    Arduino.digitalWrite( FB_DIRECTION_CONTROL_PIN, REVERSE );
+                    Device.analogWrite( FB_MOTOR_CONTROL_PIN, 0 );
+                    Device.digitalWrite( FB_DIRECTION_CONTROL_PIN, REVERSE );
                 }
 
                 //start the motor by setting the pin to the appropriate analog value
-                Arduino.analogWrite( FB_MOTOR_CONTROL_PIN, analogVal );
+                Device.analogWrite( FB_MOTOR_CONTROL_PIN, analogVal );
                 direction = Direction.reverse;
             }
             else if( fb > 0 )
@@ -198,18 +198,18 @@ namespace band_controlled_car
                 if( direction != Direction.forward )
                 {
                     //stop motor & set direction forward
-                    Arduino.analogWrite( FB_MOTOR_CONTROL_PIN, 0 );
-                    Arduino.digitalWrite( FB_DIRECTION_CONTROL_PIN, FORWARD );
+                    Device.analogWrite( FB_MOTOR_CONTROL_PIN, 0 );
+                    Device.digitalWrite( FB_DIRECTION_CONTROL_PIN, FORWARD );
                 }
 
                 //start the motor by setting the pin to the appropriate analog value
-                Arduino.analogWrite( FB_MOTOR_CONTROL_PIN, analogVal );
+                Device.analogWrite( FB_MOTOR_CONTROL_PIN, analogVal );
                 direction = Direction.forward;
             }
             else
             {
                 //reading is in the neutral zone (between -FB_MAG and 0) and the car should stop/idle
-                Arduino.analogWrite( FB_MOTOR_CONTROL_PIN, 0 );
+                Device.analogWrite( FB_MOTOR_CONTROL_PIN, 0 );
                 direction = Direction.none;
             }
         }

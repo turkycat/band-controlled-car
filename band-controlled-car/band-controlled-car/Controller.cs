@@ -1,5 +1,4 @@
-﻿using Microsoft.Maker.RemoteWiring;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,12 +8,6 @@ namespace band_controlled_car
 {
     public abstract class Controller
     {
-        public RemoteDevice Arduino
-        {
-            get;
-            private set;
-        }
-
         public enum Turn
         {
             none,
@@ -29,9 +22,9 @@ namespace band_controlled_car
             reverse
         }
 
-        public Controller( RemoteDevice device )
+        public Controller()
         {
-            Arduino = device;
+            
         }
 
         public abstract Task<bool> Initialize();
